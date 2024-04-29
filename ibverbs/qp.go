@@ -79,7 +79,7 @@ func (q *queuePair) Close() error {
 	return nil
 }
 
-func (q *queuePair) modify(attr *C.struct_ibv_qp_attr, mask int) error {
+func (q *queuePair) modify(attr *C.struct_ibv_qp_attr, mask C.int_t) error {
 	errno := C.ibv_modify_qp(q.qp, attr, mask)
 	return common.NewErrorOrNil("ibv_modify_qp", errno)
 }
