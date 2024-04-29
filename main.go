@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+
 	"gordma/ibverbs"
 )
 
@@ -22,7 +23,7 @@ func main() {
 	cq, err := ibverbs.NewCompletionQueue(c, 10)
 	fmt.Println(cq, err)
 
-	qp, err := ibverbs.NewQueuePair(pd, cq)
+	qp, err := ibverbs.NewQueuePair(nil, pd, cq)
 
 	fmt.Println(qp, err)
 	fmt.Println(qp.Qpn())
