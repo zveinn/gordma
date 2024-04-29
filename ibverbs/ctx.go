@@ -1,17 +1,19 @@
-// +build linux
+//go:build linux
 
 package ibverbs
 
-//#include <infiniband/verbs.h>
 //#cgo linux LDFLAGS: -libverbs
+//#include <infiniband/verbs.h>
 //#include <stdlib.h>
 import "C"
+
 import (
 	"errors"
 	"fmt"
-	"golang.org/x/sys/unix"
 	"net"
 	"unsafe"
+
+	"golang.org/x/sys/unix"
 )
 
 type rdmaContext struct {

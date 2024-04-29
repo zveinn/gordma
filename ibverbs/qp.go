@@ -1,17 +1,20 @@
+//go:build linux
 // +build linux
 
 package ibverbs
 
+//#cgo linux LDFLAGS: -libverbs
 //#include <infiniband/verbs.h>
 import "C"
+
 import (
 	"errors"
-	"gordma/common"
 	"log"
 	"math/rand"
 	"time"
-)
 
+	"gordma/common"
+)
 
 // queuePair QP
 type queuePair struct {
@@ -30,7 +33,7 @@ func NewQueuePair(ctx *rdmaContext, pd *protectDomain, cq *completionQueue) (*qu
 	initAttr.cap.max_recv_wr = C.uint32_t(cqe)
 	initAttr.cap.max_send_sge = 1
 	initAttr.cap.max_recv_sge = 1
-	//initAttr.cap.max_inline_data = 64
+	// initAttr.cap.max_inline_data = 64
 	initAttr.qp_type = IBV_QPT_RC
 	// make everything signaled. avoids the problem with inline
 	// sends filling up the send queue of the cq
@@ -78,7 +81,7 @@ func (q *queuePair) Close() error {
 
 func (q *queuePair) modify(attr *C.struct_ibv_qp_attr, mask int) error {
 	errno := C.ibv_modify_qp(q.qp, attr, mask)
-	return common.NewErrorOrNil("ibv_modify_qp",errno)
+	return common.NewErrorOrNil("ibv_modify_qp", errno)
 }
 
 func (q *queuePair) Init() error {
@@ -116,7 +119,7 @@ func (q *queuePair) Ready2Receive(destGid uint16, destQpn, destPsn uint32) error
 }
 
 // Ready2Send RTS
-func (q *queuePair)  Ready2Send() error  {
+func (q *queuePair) Ready2Send() error {
 	attr := C.struct_ibv_qp_attr{}
 	attr.qp_state = C.IBV_QPS_RTS
 	// Local ack timeout for primary path.
@@ -142,13 +145,13 @@ PostReceive
 PostRead
 PostWrite
 TODO: 将 sge 封装起来，尝试复用各个 Post 操作
- */
+*/
 
-func (q  *queuePair) PostSend(wr *sendWorkRequest) error {
-	return q.PostSendImm(wr,0)
+func (q *queuePair) PostSend(wr *sendWorkRequest) error {
+	return q.PostSendImm(wr, 0)
 }
 
-func (q *queuePair) PostSendImm(wr *sendWorkRequest,  imm uint32) error {
+func (q *queuePair) PostSendImm(wr *sendWorkRequest, imm uint32) error {
 	if imm > 0 {
 		// post_send_immediately
 		wr.sendWr.opcode = IBV_WR_SEND_WITH_IMM
@@ -168,7 +171,7 @@ func (q *queuePair) PostSendImm(wr *sendWorkRequest,  imm uint32) error {
 		sge.addr = C.uint64_t(uintptr(wr.mr.mr.addr))
 		sge.length = C.uint32_t(wr.mr.mr.length)
 		sge.lkey = wr.mr.mr.lkey
-	}  else  {
+	} else {
 		// send inline if there is no memory region to send
 		wr.sendWr.send_flags = IBV_SEND_INLINE
 	}
@@ -178,7 +181,7 @@ func (q *queuePair) PostSendImm(wr *sendWorkRequest,  imm uint32) error {
 	return common.NewErrorOrNil("ibv_post_send", errno)
 }
 
-func (q *queuePair) PostReceive(wr *receiveWorkRequest) error  {
+func (q *queuePair) PostReceive(wr *receiveWorkRequest) error {
 	if q.qp == nil {
 		return QPClosedErr
 	}
@@ -195,19 +198,17 @@ func (q *queuePair) PostReceive(wr *receiveWorkRequest) error  {
 	return common.NewErrorOrNil("ibv_post_recv", errno)
 }
 
-func (q *queuePair) PostWrite(wr *sendWorkRequest, remoteAddr uint64, rkey uint32) error  {
+func (q *queuePair) PostWrite(wr *sendWorkRequest, remoteAddr uint64, rkey uint32) error {
 	return q.PostWriteImm(wr, remoteAddr, rkey, 0)
 }
 
-func (q *queuePair) PostWriteImm(wr *sendWorkRequest, remoteAddr uint64, rkey uint32, imm uint32) error  {
+func (q *queuePair) PostWriteImm(wr *sendWorkRequest, remoteAddr uint64, rkey uint32, imm uint32) error {
 	if q.qp == nil {
 		return QPClosedErr
 	}
 
-	if imm > 0  {
-
+	if imm > 0 {
 	} else {
-
 	}
 	var sge C.struct_ibv_sge
 	var bad *C.struct_ibv_send_wr
@@ -224,7 +225,7 @@ func (q *queuePair) PostWriteImm(wr *sendWorkRequest, remoteAddr uint64, rkey ui
 
 	wr.sendWr.wr_id = wr.createWrId()
 
-	errno := C.ibv_post_send(q.qp, &wr.sendWr,&bad)
+	errno := C.ibv_post_send(q.qp, &wr.sendWr, &bad)
 	return common.NewErrorOrNil("[PostWrite]ibv_post_send", errno)
 }
 
@@ -244,6 +245,6 @@ func (q *queuePair) PostRead(wr *sendWorkRequest, remoteAddr uint64, rkey uint32
 
 	wr.sendWr.wr_id = wr.createWrId()
 
-	errno := C.ibv_post_send(q.qp, &wr.sendWr,&bad)
+	errno := C.ibv_post_send(q.qp, &wr.sendWr, &bad)
 	return common.NewErrorOrNil("[PostWrite]ibv_post_send", errno)
 }

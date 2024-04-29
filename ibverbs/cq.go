@@ -1,13 +1,16 @@
-// +build linux
+//go:build linux
 
 package ibverbs
 
+//#cgo linux LDFLAGS: -libverbs
 //#include <infiniband/verbs.h>
 import "C"
+
 import (
 	"errors"
-	"golang.org/x/sys/unix"
 	"log"
+
+	"golang.org/x/sys/unix"
 )
 
 type completionQueue struct {

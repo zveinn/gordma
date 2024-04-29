@@ -1,7 +1,9 @@
+//go:build linux
 // +build linux
 
 package ibverbs
 
+//#cgo linux LDFLAGS: -libverbs
 //#include <infiniband/verbs.h>
 import "C"
 import "errors"

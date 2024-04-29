@@ -1,15 +1,18 @@
-// +build linux
+//go:build linux
 
 package ibverbs
 
+//#cgo linux LDFLAGS: -libverbs
 //#include <infiniband/verbs.h>
 import "C"
+
 import (
 	"errors"
 	"fmt"
-	"golang.org/x/sys/unix"
 	"runtime"
 	"unsafe"
+
+	"golang.org/x/sys/unix"
 )
 
 type memoryRegion struct {
@@ -42,9 +45,9 @@ func NewMemoryRegion(pd *protectDomain, size int, isMmap bool) (*memoryRegion, e
 		return nil, errors.New("ibv_reg_mr: failed to reg mr")
 	}
 	mr := &memoryRegion{
-		buf: buf,
-		PD:  pd,
-		mr:  mrC,
+		buf:       buf,
+		PD:        pd,
+		mr:        mrC,
 		remoteKey: uint32(mrC.rkey),
 	}
 	runtime.SetFinalizer(mr, (*memoryRegion).finalize)
